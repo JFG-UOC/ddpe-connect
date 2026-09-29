@@ -82,5 +82,10 @@ def test_connection_errors_redact_secrets(monkeypatch):
     monkeypatch.setitem(sys.modules, "pyspark.sql", sql)
 
     with pytest.raises(DDPEConnectionError) as captured:
-        DDPESession.builder.access_token("sensitive-token").getOrCreate()
+        (
+            DDPESession.builder
+            .remote("spark.example:443")
+            .access_token("sensitive-token")
+            .getOrCreate()
+        )
     assert "sensitive-token" not in str(captured.value)

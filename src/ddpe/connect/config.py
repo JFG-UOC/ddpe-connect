@@ -1,4 +1,4 @@
-"""Configuration loading with defaults, TOML, environment, and builder overrides."""
+"""Configuration loading from TOML, environment, and builder overrides."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .errors import DDPEConfigurationError
 DEFAULT_CONFIG_FILE = Path.home() / ".config" / "ddpe" / "config.toml"
 
 _DEFAULTS: dict[str, Any] = {
-    "spark_connect_url": "localhost:15002",
+    "spark_connect_url": None,
     "spark_connect_ca": None,
     "token_url": "http://localhost:8080/realms/ddpe/protocol/openid-connect/token",
     "client_id": "ddpe-client",
@@ -163,9 +163,17 @@ def load_config(
     values.update({key: value for key, value in override_values.items() if value is not None})
     spark_config.update({str(key): str(value) for key, value in dict(override_spark).items()})
 
+    spark_connect_url = values.get("spark_connect_url")
+    if spark_connect_url is None or not str(spark_connect_url).strip():
+        raise DDPEConfigurationError(
+            "Missing required Spark Connect URL. Set DDPE_SPARK_CONNECT_URL, "
+            "configure ddpe.spark_connect_url in TOML, or call "
+            "DDPESession.builder.remote(...)."
+        )
+
     try:
         config = DDPEConfig(
-            spark_connect_url=str(values["spark_connect_url"]),
+            spark_connect_url=str(spark_connect_url),
             spark_connect_ca=(
                 str(Path(str(values["spark_connect_ca"])).expanduser())
                 if values["spark_connect_ca"]

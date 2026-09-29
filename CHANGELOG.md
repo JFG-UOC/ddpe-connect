@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+* Made the Spark Connect endpoint mandatory and removed its implicit local default.
 * Documented installation and upgrades directly from the GitHub repository.
 * Removed the unsupported client-side application-naming API from code and examples.
 * Updated every file in `examples/` to rely on the server-managed application name.

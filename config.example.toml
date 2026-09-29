@@ -1,4 +1,5 @@
 [ddpe]
+# Required unless DDPE_SPARK_CONNECT_URL or builder.remote(...) is used.
 spark_connect_url = "spark-connect.example:443"
 # Omit this setting when the server certificate chains to a system-trusted CA.
 spark_connect_ca = "/path/to/ddpe-spark-ca.pem"

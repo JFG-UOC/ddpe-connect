@@ -8,6 +8,7 @@ from ddpe.connect.errors import DDPEConfigurationError
 
 def _env(**updates):
     values = {
+        "DDPE_SPARK_CONNECT_URL": "spark.example:443",
         "DDPE_USERNAME": "user",
         "DDPE_PASSWORD": "password",
     }
@@ -15,11 +16,26 @@ def _env(**updates):
     return values
 
 
-def test_defaults_are_available_without_a_file():
+def test_defaults_are_available_when_required_url_is_provided():
     config = load_config(environ=_env())
-    assert config.spark_connect_url == "localhost:15002"
+    assert config.spark_connect_url == "spark.example:443"
     assert config.client_id == "ddpe-client"
     assert config.verify_ssl is True
+
+
+def test_spark_connect_url_is_required():
+    with pytest.raises(DDPEConfigurationError, match="Missing required Spark Connect URL"):
+        load_config(
+            environ={
+                "DDPE_USERNAME": "user",
+                "DDPE_PASSWORD": "password",
+            }
+        )
+
+
+def test_empty_spark_connect_url_is_rejected():
+    with pytest.raises(DDPEConfigurationError, match="Missing required Spark Connect URL"):
+        load_config(environ=_env(DDPE_SPARK_CONNECT_URL="  "))
 
 
 def test_environment_overrides_defaults():
@@ -38,6 +54,17 @@ def test_environment_overrides_defaults():
 def test_builder_overrides_environment():
     config = load_config(
         environ=_env(DDPE_SPARK_CONNECT_URL="env.example"),
+        overrides={"spark_connect_url": "builder.example"},
+    )
+    assert config.spark_connect_url == "builder.example"
+
+
+def test_builder_can_supply_required_url_without_environment_value():
+    config = load_config(
+        environ={
+            "DDPE_USERNAME": "user",
+            "DDPE_PASSWORD": "password",
+        },
         overrides={"spark_connect_url": "builder.example"},
     )
     assert config.spark_connect_url == "builder.example"
@@ -97,5 +124,10 @@ password = "password"
 
 
 def test_access_token_does_not_require_password_credentials():
-    config = load_config(environ={"DDPE_ACCESS_TOKEN": "token"})
+    config = load_config(
+        environ={
+            "DDPE_SPARK_CONNECT_URL": "spark.example:443",
+            "DDPE_ACCESS_TOKEN": "token",
+        }
+    )
     assert config.access_token == "token"

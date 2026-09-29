@@ -2,7 +2,10 @@
 
 from ddpe.connect import DDPESession
 
-# The DDPE Spark Connect server owns the application name.
-spark = DDPESession.builder.getOrCreate()
+spark = (
+    DDPESession.builder
+    .remote("spark-connect.example:443")
+    .getOrCreate()
+)
 spark.sql("SHOW DATABASES").show(truncate=False)
 spark.stop()

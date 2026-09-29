@@ -1,0 +1,19 @@
+[ddpe]
+spark_connect_url = "spark-connect.example:443"
+# Omit this setting when the server certificate chains to a system-trusted CA.
+spark_connect_ca = "/path/to/ddpe-spark-ca.pem"
+
+[ddpe.auth]
+token_url = "https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
+client_id = "ddpe-client"
+client_secret = ""
+username = ""
+password = ""
+scope = "openid"
+# true, false (development only), or a CA-bundle path
+verify_ssl = true
+timeout_seconds = 30
+refresh_skew_seconds = 60
+
+[ddpe.spark]
+"spark.sql.shuffle.partitions" = "16"

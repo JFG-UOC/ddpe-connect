@@ -26,7 +26,6 @@ Supported client-visible Spark properties can be supplied with `.config()`, exce
 * Custom CA support for the Spark Connect gRPC channel
 * Direct access-token override for automation and testing
 * Secret redaction from connection exceptions
-* Explicit rejection of client-side application-name overrides
 * No import-time dependency on PySpark
 
 ## Requirements
@@ -120,12 +119,6 @@ spark = DDPESession.builder.getOrCreate()
 spark.sql("SHOW DATABASES").show(truncate=False)
 spark.stop()
 ```
-
-## DDPE application name
-
-The Spark Connect server owns the application name. A client session cannot rename
-it. Set the desired name when creating the DDPE Spark Connect server. The library
-rejects `spark.app.name` to prevent unsupported client configuration.
 
 ## TOML configuration
 

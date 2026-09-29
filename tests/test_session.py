@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import types
 
@@ -52,7 +53,7 @@ def test_session_builder_constructs_authenticated_remote(monkeypatch, tmp_path):
         DDPESession.builder
         .remote("spark.example:443")
         .access_token("secret-token")
-        .ca_cert(ca)
+        .spark_ca_cert(ca)
         .config("spark.sql.shuffle.partitions", 4)
         .getOrCreate()
     )
@@ -60,6 +61,7 @@ def test_session_builder_constructs_authenticated_remote(monkeypatch, tmp_path):
     assert result == "spark-session"
     assert seen["remote"] == "sc://spark.example:443/;token=secret-token"
     assert ("spark.sql.shuffle.partitions", "4") in seen["configs"]
+    assert os.environ["GRPC_DEFAULT_SSL_ROOTS_FILE_PATH"] == str(ca)
 
 
 def test_builder_rejects_application_name():
@@ -89,3 +91,22 @@ def test_connection_errors_redact_secrets(monkeypatch):
             .getOrCreate()
         )
     assert "sensitive-token" not in str(captured.value)
+
+
+def test_builder_configures_distinct_spark_and_keycloak_cas(tmp_path):
+    spark_ca = tmp_path / "spark-ca.pem"
+    keycloak_ca = tmp_path / "keycloak-ca.pem"
+    spark_ca.write_text("spark-ca", encoding="utf-8")
+    keycloak_ca.write_text("keycloak-ca", encoding="utf-8")
+
+    config = (
+        DDPESession.builder
+        .remote("spark.example:443")
+        .access_token("token")
+        .spark_ca_cert(spark_ca)
+        .keycloak_ca_cert(keycloak_ca)
+        ._load()
+    )
+
+    assert config.spark_connect_ca == str(spark_ca)
+    assert config.keycloak_ca == str(keycloak_ca)

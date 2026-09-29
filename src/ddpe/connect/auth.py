@@ -103,10 +103,16 @@ class KeycloakAuthenticator:
             if cached:
                 return cached
 
-        warning_context = warnings.catch_warnings() if self._config.verify_ssl is False else nullcontext()
+        keycloak_verify: bool | str
+        if self._config.verify_ssl is False:
+            keycloak_verify = False
+        else:
+            keycloak_verify = self._config.keycloak_ca or self._config.verify_ssl
+
+        warning_context = warnings.catch_warnings() if keycloak_verify is False else nullcontext()
         try:
             with warning_context:
-                if self._config.verify_ssl is False:
+                if keycloak_verify is False:
                     warnings.simplefilter("ignore", InsecureRequestWarning)
                 response = requests.post(
                     self._config.token_url,
@@ -120,7 +126,7 @@ class KeycloakAuthenticator:
                     },
                     headers={"Accept": "application/json"},
                     timeout=self._config.timeout_seconds,
-                    verify=self._config.verify_ssl,
+                    verify=keycloak_verify,
                 )
         except requests.RequestException as exc:
             raise DDPEAuthenticationError(

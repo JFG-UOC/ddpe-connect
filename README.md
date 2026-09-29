@@ -8,11 +8,7 @@ from Keycloak, configures Spark Connect TLS trust, and returns a normal
 ```python
 from ddpe.connect import DDPESession
 
-spark = (
-    DDPESession.builder
-    .remote("spark-connect.example:443")
-    .getOrCreate()
-)
+spark = DDPESession.builder.getOrCreate()
 ```
 
 The library focuses on client connection setup. Catalogs, storage, the application
@@ -26,8 +22,7 @@ Supported client-visible Spark properties can be supplied with `.config()`, exce
 * Keycloak resource-owner password grant
 * Process-local, thread-safe token cache with expiry awareness
 * Configuration through TOML, environment variables, or the builder
-* Keycloak TLS verification using system trust or a custom CA bundle
-* Custom CA support for the Spark Connect gRPC channel
+* Independent custom CA bundles for Keycloak HTTPS and Spark Connect gRPC
 * Direct access-token override for automation and testing
 * Secret redaction from connection exceptions
 * No import-time dependency on PySpark
@@ -54,7 +49,7 @@ python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@main"
 For reproducible deployments, install a release tag:
 
 ```bash
-python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.0"
+python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.1"
 ```
 
 Upgrade an existing installation from GitHub:
@@ -110,6 +105,7 @@ python -m build
 export DDPE_SPARK_CONNECT_URL="spark-connect.example:443"
 export DDPE_SPARK_CONNECT_CA="/path/to/ddpe-spark-ca.pem"
 export DDPE_KEYCLOAK_TOKEN_URL="https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
+export DDPE_KEYCLOAK_CA="/path/to/keycloak-ca.pem"
 export DDPE_OIDC_CLIENT_ID="ddpe-client"
 export DDPE_OIDC_CLIENT_SECRET="..."
 export DDPE_USERNAME="..."
@@ -126,11 +122,9 @@ spark.stop()
 
 ## TOML configuration
 
-The default configuration file is `~/.config/ddpe/config.toml`. The file itself
-is optional, but the Spark Connect endpoint is mandatory. Supply it as
-`DDPE_SPARK_CONNECT_URL`, as `spark_connect_url` in TOML, or through
-`.remote(...)`. To select a different file, set `DDPE_CONFIG_FILE` or call
-`.config_file(...)`.
+The default configuration file is `~/.config/ddpe/config.toml`. It is optional:
+when absent, built-in defaults and environment variables are used. To select a
+different file, set `DDPE_CONFIG_FILE` or call `.config_file(...)`.
 
 ```toml
 [ddpe]
@@ -141,6 +135,7 @@ spark_connect_ca = "/path/to/ddpe-spark-ca.pem"
 token_url = "https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
 client_id = "ddpe-client"
 scope = "openid"
+keycloak_ca = "/path/to/keycloak-ca.pem"
 verify_ssl = true
 
 [ddpe.spark]
@@ -160,14 +155,12 @@ Configuration precedence is:
 1. Builder methods
 2. Environment variables
 3. TOML
-4. Built-in defaults for optional settings
+4. Built-in defaults
 
-There is no built-in Spark Connect endpoint. The client raises a configuration
-error before authentication unless the URL is supplied through the builder, the
-environment, or TOML. The Keycloak token URL defaults to
-`http://localhost:8080/realms/ddpe/protocol/openid-connect/token`, and the client
-ID defaults to `ddpe-client`. User credentials default to empty values and must be
-provided unless `DDPE_ACCESS_TOKEN` is set.
+The local development defaults are `localhost:15002` for Spark Connect,
+`http://localhost:8080/realms/ddpe/protocol/openid-connect/token` for Keycloak,
+and `ddpe-client` for the client ID. User credentials default to empty values and
+must be provided unless `DDPE_ACCESS_TOKEN` is set.
 
 ## Builder configuration
 
@@ -185,8 +178,8 @@ spark = (
         client_id="ddpe-client",
         client_secret=os.environ.get("DDPE_OIDC_CLIENT_SECRET", ""),
     )
-    .ca_cert("/path/to/ddpe-spark-ca.pem")
-    .verify_ssl("/path/to/keycloak-ca.pem")
+    .spark_ca_cert("/path/to/spark-connect-ca.pem")
+    .keycloak_ca_cert("/path/to/keycloak-ca.pem")
     .config("spark.sql.shuffle.partitions", 16)
     .getOrCreate()
 )
@@ -197,15 +190,16 @@ spark = (
 | Variable | Purpose |
 |---|---|
 | `DDPE_CONFIG_FILE` | Alternative TOML path |
-| `DDPE_SPARK_CONNECT_URL` | Required Spark Connect `host[:port]` unless supplied by TOML or `.remote(...)` |
+| `DDPE_SPARK_CONNECT_URL` | Spark Connect `host[:port]` |
 | `DDPE_SPARK_CONNECT_CA` | PEM CA file for Spark Connect gRPC |
 | `DDPE_KEYCLOAK_TOKEN_URL` | Keycloak token endpoint |
+| `DDPE_KEYCLOAK_CA` | PEM CA bundle used only for Keycloak HTTPS |
 | `DDPE_OIDC_CLIENT_ID` | OAuth client ID |
 | `DDPE_OIDC_CLIENT_SECRET` | OAuth client secret, if required |
 | `DDPE_USERNAME` | DDPE username |
 | `DDPE_PASSWORD` | DDPE password |
 | `DDPE_OIDC_SCOPE` | OAuth scope; defaults to `openid` |
-| `DDPE_VERIFY_SSL` | `true`, `false`, or a Keycloak CA path |
+| `DDPE_VERIFY_SSL` | Enable or disable Keycloak certificate verification |
 | `DDPE_AUTH_TIMEOUT_SECONDS` | Keycloak request timeout |
 | `DDPE_TOKEN_REFRESH_SKEW_SECONDS` | Refresh-before-expiry window |
 | `DDPE_ACCESS_TOKEN` | Pre-issued token; bypasses Keycloak |
@@ -214,9 +208,10 @@ spark = (
 
 For production:
 
-* Keep `DDPE_VERIFY_SSL=true`, or set it to a trusted CA-bundle path.
-* Set `DDPE_SPARK_CONNECT_CA` when the DDPE gRPC certificate is signed by a
-  private CA. If omitted, gRPC uses the operating system trust roots.
+* Keep `DDPE_VERIFY_SSL=true` and set `DDPE_KEYCLOAK_CA` when Keycloak uses
+  a private CA. If omitted, Requests uses the operating system trust roots.
+* Set `DDPE_SPARK_CONNECT_CA` independently when the Spark Connect gRPC
+  certificate is signed by a private CA. If omitted, gRPC uses its trust roots.
 * Keep passwords, client secrets, tokens, and private keys out of Git.
 * Use `DDPE_VERIFY_SSL=false` only for a PoC or isolated development environment.
   This bypass applies only to the HTTPS call to Keycloak.
@@ -230,7 +225,6 @@ Tokens are cached only in process memory and are never intentionally logged.
 ```python
 spark = (
     DDPESession.builder
-    .remote("spark-connect.example:443")
     .config("spark.sql.defaultCatalog", "iceberg")
     .configs({
         "spark.sql.shuffle.partitions": "16",
@@ -246,11 +240,7 @@ spark = (
 from ddpe.connect import DDPESession, DDPEError
 
 try:
-    spark = (
-        DDPESession.builder
-        .remote("spark-connect.example:443")
-        .getOrCreate()
-    )
+    spark = DDPESession.builder.getOrCreate()
 except DDPEError as exc:
     print(f"DDPE connection failed: {exc}")
 ```

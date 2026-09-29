@@ -14,6 +14,7 @@ from ddpe.connect.errors import DDPEAuthenticationError
 
 def _config(**overrides):
     values = {
+        "spark_connect_url": "spark.example:443",
         "token_url": "https://keycloak.example/token",
         "client_id": "client",
         "client_secret": "secret",
@@ -104,3 +105,26 @@ def test_missing_access_token_is_rejected(monkeypatch):
     monkeypatch.setattr(requests, "post", lambda *args, **kwargs: Response({}))
     with pytest.raises(DDPEAuthenticationError, match="access_token"):
         KeycloakAuthenticator(_config()).get_token()
+
+
+def test_keycloak_uses_its_own_ca_not_the_spark_ca(monkeypatch, tmp_path):
+    spark_ca = tmp_path / "spark-ca.pem"
+    keycloak_ca = tmp_path / "keycloak-ca.pem"
+    spark_ca.write_text("spark-ca", encoding="utf-8")
+    keycloak_ca.write_text("keycloak-ca", encoding="utf-8")
+    calls = []
+
+    def post(*args, **kwargs):
+        calls.append(kwargs)
+        return Response({"access_token": "token", "expires_in": 300})
+
+    monkeypatch.setattr(requests, "post", post)
+    auth = KeycloakAuthenticator(
+        _config(
+            spark_connect_ca=str(spark_ca),
+            keycloak_ca=str(keycloak_ca),
+        )
+    )
+    assert auth.get_token() == "token"
+    assert calls[0]["verify"] == str(keycloak_ca)
+    assert calls[0]["verify"] != str(spark_ca)

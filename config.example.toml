@@ -11,7 +11,9 @@ client_secret = ""
 username = ""
 password = ""
 scope = "openid"
-# true, false (development only), or a CA-bundle path
+# Omit when the Keycloak certificate chains to a system-trusted CA.
+keycloak_ca = "/path/to/keycloak-ca.pem"
+# Set false only for isolated development; independent from the Spark CA.
 verify_ssl = true
 timeout_seconds = 30
 refresh_skew_seconds = 60

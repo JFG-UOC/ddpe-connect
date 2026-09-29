@@ -72,17 +72,35 @@ class DDPEBuilder:
         self._overrides["access_token"] = token
         return self
 
-    def verify_ssl(self, value: bool | str = True) -> DDPEBuilder:
-        """Set Keycloak TLS verification to true, false, or a CA-bundle path."""
+    def verify_keycloak_ssl(self, enabled: bool = True) -> DDPEBuilder:
+        """Enable or disable TLS certificate verification for Keycloak HTTPS."""
 
-        self._overrides["verify_ssl"] = value
+        self._overrides["verify_ssl"] = enabled
         return self
 
-    def ca_cert(self, path: str | Path) -> DDPEBuilder:
-        """Set the PEM CA used by the Spark Connect gRPC channel."""
+    def keycloak_ca_cert(self, path: str | Path) -> DDPEBuilder:
+        """Set the PEM CA bundle used only for the Keycloak HTTPS endpoint."""
+
+        self._overrides["keycloak_ca"] = str(path)
+        return self
+
+    def spark_ca_cert(self, path: str | Path) -> DDPEBuilder:
+        """Set the PEM CA bundle used only by the Spark Connect gRPC channel."""
 
         self._overrides["spark_connect_ca"] = str(path)
         return self
+
+    def verify_ssl(self, value: bool | str = True) -> DDPEBuilder:
+        """Compatibility alias for Keycloak verification configuration."""
+
+        if isinstance(value, bool):
+            return self.verify_keycloak_ssl(value)
+        return self.keycloak_ca_cert(value)
+
+    def ca_cert(self, path: str | Path) -> DDPEBuilder:
+        """Compatibility alias for :meth:`spark_ca_cert`."""
+
+        return self.spark_ca_cert(path)
 
     def config(self, key: str, value: Any) -> DDPEBuilder:
         normalized_key = str(key)

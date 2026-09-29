@@ -2,11 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [0.1.1] - 2026-09-29
 
 ### Changed
 
-* Made the Spark Connect endpoint mandatory and removed its implicit local default.
+* Separated the Keycloak HTTPS CA from the Spark Connect gRPC CA.
+* Added explicit `keycloak_ca_cert(...)` and `spark_ca_cert(...)` builder methods.
+* Added `DDPE_KEYCLOAK_CA` while retaining legacy builder aliases.
+
 * Documented installation and upgrades directly from the GitHub repository.
 * Removed the unsupported client-side application-naming API from code and examples.
 * Updated every file in `examples/` to rely on the server-managed application name.

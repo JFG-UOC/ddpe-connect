@@ -15,8 +15,8 @@ spark = (
         client_id="ddpe-client",
         client_secret=os.environ.get("DDPE_OIDC_CLIENT_SECRET", ""),
     )
-    .ca_cert("/path/to/ddpe-ca.pem")
-    .verify_ssl("/path/to/keycloak-ca.pem")
+    .spark_ca_cert("/path/to/spark-connect-ca.pem")
+    .keycloak_ca_cert("/path/to/keycloak-ca.pem")
     .config("spark.sql.shuffle.partitions", "16")
     .getOrCreate()
 )

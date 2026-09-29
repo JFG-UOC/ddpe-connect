@@ -131,3 +131,21 @@ def test_access_token_does_not_require_password_credentials():
         }
     )
     assert config.access_token == "token"
+
+
+def test_spark_and_keycloak_ca_paths_are_independent(tmp_path):
+    spark_ca = tmp_path / "spark-ca.pem"
+    keycloak_ca = tmp_path / "keycloak-ca.pem"
+    spark_ca.write_text("spark-ca", encoding="utf-8")
+    keycloak_ca.write_text("keycloak-ca", encoding="utf-8")
+
+    config = load_config(
+        environ=_env(
+            DDPE_SPARK_CONNECT_CA=str(spark_ca),
+            DDPE_KEYCLOAK_CA=str(keycloak_ca),
+        )
+    )
+
+    assert config.spark_connect_ca == str(spark_ca)
+    assert config.keycloak_ca == str(keycloak_ca)
+    assert config.spark_connect_ca != config.keycloak_ca

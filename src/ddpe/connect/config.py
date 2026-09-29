@@ -21,6 +21,7 @@ _DEFAULTS: dict[str, Any] = {
     "username": "",
     "password": "",
     "scope": "openid",
+    "keycloak_ca": None,
     "verify_ssl": True,
     "timeout_seconds": 30.0,
     "refresh_skew_seconds": 60,
@@ -36,6 +37,7 @@ _ENV: dict[str, str] = {
     "username": "DDPE_USERNAME",
     "password": "DDPE_PASSWORD",
     "scope": "DDPE_OIDC_SCOPE",
+    "keycloak_ca": "DDPE_KEYCLOAK_CA",
     "verify_ssl": "DDPE_VERIFY_SSL",
     "timeout_seconds": "DDPE_AUTH_TIMEOUT_SECONDS",
     "refresh_skew_seconds": "DDPE_TOKEN_REFRESH_SKEW_SECONDS",
@@ -93,6 +95,7 @@ class DDPEConfig:
     username: str
     password: str
     scope: str
+    keycloak_ca: str | None
     verify_ssl: bool | str
     timeout_seconds: float
     refresh_skew_seconds: int
@@ -124,6 +127,7 @@ class DDPEConfig:
                 )
         for candidate, label in (
             (self.spark_connect_ca, "spark_connect_ca"),
+            (self.keycloak_ca, "keycloak_ca"),
             (self.verify_ssl if isinstance(self.verify_ssl, str) else None, "verify_ssl"),
         ):
             if candidate and not Path(candidate).is_file():
@@ -185,6 +189,11 @@ def load_config(
             username=str(values["username"]),
             password=str(values["password"]),
             scope=str(values["scope"]),
+            keycloak_ca=(
+                str(Path(str(values["keycloak_ca"])).expanduser())
+                if values["keycloak_ca"]
+                else None
+            ),
             verify_ssl=_parse_verify_ssl(values["verify_ssl"]),
             timeout_seconds=float(values["timeout_seconds"]),
             refresh_skew_seconds=int(values["refresh_skew_seconds"]),

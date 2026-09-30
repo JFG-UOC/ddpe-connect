@@ -29,7 +29,7 @@ Supported client-visible Spark properties can be supplied with `.config()`, exce
 
 ## Requirements
 
-* Python 3.11 or newer
+* Python 3.10 or newer
 * Git, when installing directly from GitHub
 * A PySpark Connect client compatible with the DDPE Spark server
 * Network access to Keycloak and the DDPE Spark Connect endpoint
@@ -49,7 +49,7 @@ python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@main"
 For reproducible deployments, install a release tag:
 
 ```bash
-python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.1"
+python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.2"
 ```
 
 Upgrade an existing installation from GitHub:
@@ -89,6 +89,20 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install .
 ```
+
+On Ubuntu 22.04 with the system Python 3.10:
+
+```bash
+sudo apt update
+sudo apt install python3-venv git
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install .
+```
+
+Python 3.10 installs `tomli` automatically as a conditional dependency. Python
+3.11 and newer use the standard-library `tomllib` module instead.
 
 For development:
 

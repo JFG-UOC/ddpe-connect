@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-09-30
+
+### Changed
+
+* Added support for Python 3.10 and Ubuntu 22.04.
+* Added `tomli` as a conditional dependency for Python versions before 3.11.
+* Expanded CI to test Python 3.10 on Ubuntu 22.04.
+
 ## [0.1.1] - 2026-09-29
 
 ### Changed

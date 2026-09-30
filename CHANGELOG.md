@@ -7,8 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 * Added Python 3.10 support through the conditional `tomli` dependency.
-* Added `setup.cfg` and `setup.py` compatibility metadata for older pip/setuptools.
-* Added an installation check that verifies the installed `ddpe.connect` version.
+* Added compatibility metadata for older pip/setuptools installations.
+* Rejected misleading Spark-side `verify_ssl = false` settings with guidance to use `spark_connect_ca`.
+* Updated the example Keycloak token URL to include `/auth/realms/ddae`.
 
 ## [0.1.1] - 2026-09-29
 

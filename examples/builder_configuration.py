@@ -8,7 +8,7 @@ from ddpe.connect import DDPESession
 spark = (
     DDPESession.builder
     .remote("spark-connect.example:443")
-    .token_url("https://keycloak.example/realms/ddpe/protocol/openid-connect/token")
+    .token_url("https://keycloak.example/auth/realms/ddae/protocol/openid-connect/token")
     .credentials(
         username=os.environ["DDPE_USERNAME"],
         password=os.environ["DDPE_PASSWORD"],

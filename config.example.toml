@@ -5,7 +5,7 @@ spark_connect_url = "spark-connect.example:443"
 spark_connect_ca = "/path/to/ddpe-spark-ca.pem"
 
 [ddpe.auth]
-token_url = "https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
+token_url = "https://keycloak.example/auth/realms/ddae/protocol/openid-connect/token"
 client_id = "ddpe-client"
 client_secret = ""
 username = ""

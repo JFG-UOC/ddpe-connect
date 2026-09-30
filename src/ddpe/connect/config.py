@@ -80,6 +80,14 @@ def _read_toml(path: Path, *, required: bool) -> dict[str, Any]:
     ddpe = document.get("ddpe", {})
     if not isinstance(ddpe, dict):
         raise DDPEConfigurationError("The [ddpe] TOML section must be a table.")
+    for unsupported_key in ("verify_ssl", "spark_verify_ssl"):
+        if unsupported_key in ddpe:
+            raise DDPEConfigurationError(
+                f"{unsupported_key} under [ddpe] cannot disable Spark Connect TLS "
+                "certificate verification. Put verify_ssl under [ddpe.auth] only "
+                "for Keycloak. For Spark Connect, set spark_connect_ca to the PEM "
+                "file containing the issuing CA certificate."
+            )
     auth = ddpe.pop("auth", {})
     spark = ddpe.pop("spark", {})
     if not isinstance(auth, dict) or not isinstance(spark, dict):

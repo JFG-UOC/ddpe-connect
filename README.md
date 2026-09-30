@@ -29,7 +29,7 @@ Supported client-visible Spark properties can be supplied with `.config()`, exce
 
 ## Requirements
 
-* Python 3.10 or newer
+* Python 3.11 or newer
 * Git, when installing directly from GitHub
 * A PySpark Connect client compatible with the DDPE Spark server
 * Network access to Keycloak and the DDPE Spark Connect endpoint
@@ -49,7 +49,7 @@ python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@main"
 For reproducible deployments, install a release tag:
 
 ```bash
-python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.2"
+python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.1"
 ```
 
 Upgrade an existing installation from GitHub:
@@ -84,16 +84,11 @@ Avoid disabling certificate validation permanently.
 ```bash
 git clone https://github.com/JFG-UOC/ddpe-connect.git
 cd ddpe-connect
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-test -f pyproject.toml && test -f setup.cfg && test -d src/ddpe
+python -m pip install --upgrade pip
 python -m pip install .
-python -c "import ddpe.connect; print(ddpe.connect.__version__)"
 ```
-
-The final command must print `0.1.2`. If pip reports `UNKNOWN-0.0.0`, the
-installation is being run from an incorrect or outdated project directory.
 
 For development:
 
@@ -109,7 +104,7 @@ python -m build
 ```bash
 export DDPE_SPARK_CONNECT_URL="spark-connect.example:443"
 export DDPE_SPARK_CONNECT_CA="/path/to/ddpe-spark-ca.pem"
-export DDPE_KEYCLOAK_TOKEN_URL="https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
+export DDPE_KEYCLOAK_TOKEN_URL="https://keycloak.example/auth/realms/ddae/protocol/openid-connect/token"
 export DDPE_KEYCLOAK_CA="/path/to/keycloak-ca.pem"
 export DDPE_OIDC_CLIENT_ID="ddpe-client"
 export DDPE_OIDC_CLIENT_SECRET="..."
@@ -137,7 +132,7 @@ spark_connect_url = "spark-connect.example:443"
 spark_connect_ca = "/path/to/ddpe-spark-ca.pem"
 
 [ddpe.auth]
-token_url = "https://keycloak.example/realms/ddpe/protocol/openid-connect/token"
+token_url = "https://keycloak.example/auth/realms/ddae/protocol/openid-connect/token"
 client_id = "ddpe-client"
 scope = "openid"
 keycloak_ca = "/path/to/keycloak-ca.pem"
@@ -176,7 +171,7 @@ from ddpe.connect import DDPESession
 spark = (
     DDPESession.builder
     .remote("spark-connect.example:443")
-    .token_url("https://keycloak.example/realms/ddpe/protocol/openid-connect/token")
+    .token_url("https://keycloak.example/auth/realms/ddae/protocol/openid-connect/token")
     .credentials(
         username=os.environ["DDPE_USERNAME"],
         password=os.environ["DDPE_PASSWORD"],
@@ -221,9 +216,12 @@ For production:
 * Use `DDPE_VERIFY_SSL=false` only for a PoC or isolated development environment.
   This bypass applies only to the HTTPS call to Keycloak.
 
-A bearer token causes Spark Connect to use TLS. Configure a CA file or use a
-certificate trusted by the operating system for the Spark Connect endpoint.
-Tokens are cached only in process memory and are never intentionally logged.
+A bearer token causes Spark Connect to use TLS. The gRPC client does not support
+`verify_ssl = false` for this channel. Configure `spark_connect_ca` (or
+`DDPE_SPARK_CONNECT_CA`) with the PEM certificate of the issuing CA, or install
+that CA in the operating-system trust store. The `[ddpe.auth] verify_ssl` setting
+applies only to Keycloak HTTPS. Tokens are cached only in process memory and are
+never intentionally logged.
 
 ## Custom Spark configuration
 

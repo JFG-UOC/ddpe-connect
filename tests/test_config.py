@@ -110,9 +110,9 @@ def test_toml_rejects_application_name(tmp_path):
     path = tmp_path / "config.toml"
     path.write_text(
         '''
-[ddpe.auth]
-username = "user"
-password = "password"
+[ddpe]
+spark_connect_url = "spark.example:443"
+access_token = "token"
 
 [ddpe.spark]
 "spark.app.name" = "client-name"
@@ -149,3 +149,19 @@ def test_spark_and_keycloak_ca_paths_are_independent(tmp_path):
     assert config.spark_connect_ca == str(spark_ca)
     assert config.keycloak_ca == str(keycloak_ca)
     assert config.spark_connect_ca != config.keycloak_ca
+
+
+@pytest.mark.parametrize("setting", ["verify_ssl", "spark_verify_ssl"])
+def test_toml_rejects_attempt_to_disable_spark_tls_verification(tmp_path, setting):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        f'''
+[ddpe]
+spark_connect_url = "spark.example:443"
+access_token = "token"
+{setting} = false
+''',
+        encoding="utf-8",
+    )
+    with pytest.raises(DDPEConfigurationError, match="cannot disable Spark Connect TLS"):
+        load_config(config_file=path, environ={})

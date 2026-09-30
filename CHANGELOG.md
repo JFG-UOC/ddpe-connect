@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.2] - 2026-09-30
 
-### Changed
+### Fixed
 
-* Added support for Python 3.10 and Ubuntu 22.04.
-* Added `tomli` as a conditional dependency for Python versions before 3.11.
-* Expanded CI to test Python 3.10 on Ubuntu 22.04.
+* Added Python 3.10 support through the conditional `tomli` dependency.
+* Added `setup.cfg` and `setup.py` compatibility metadata for older pip/setuptools.
+* Added an installation check that verifies the installed `ddpe.connect` version.
 
 ## [0.1.1] - 2026-09-29
 

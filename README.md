@@ -84,25 +84,16 @@ Avoid disabling certificate validation permanently.
 ```bash
 git clone https://github.com/JFG-UOC/ddpe-connect.git
 cd ddpe-connect
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install .
-```
-
-On Ubuntu 22.04 with the system Python 3.10:
-
-```bash
-sudo apt update
-sudo apt install python3-venv git
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
+test -f pyproject.toml && test -f setup.cfg && test -d src/ddpe
 python -m pip install .
+python -c "import ddpe.connect; print(ddpe.connect.__version__)"
 ```
 
-Python 3.10 installs `tomli` automatically as a conditional dependency. Python
-3.11 and newer use the standard-library `tomllib` module instead.
+The final command must print `0.1.2`. If pip reports `UNKNOWN-0.0.0`, the
+installation is being run from an incorrect or outdated project directory.
 
 For development:
 

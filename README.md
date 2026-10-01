@@ -121,7 +121,7 @@ verify_ssl = true
 "spark.sql.shuffle.partitions" = "16"
 ```
 
-Keep secrets in environment variables rather thanTOML:
+Keep secrets in environment variables rather than TOML:
 
 ```bash
 export DDPE_OIDC_CLIENT_SECRET="..."
@@ -239,6 +239,32 @@ tests, and build — on every push and pull request across Python 3.10 to 3.13.
 
 The canonical repository is
 [github.com/JFG-UOC/ddpe-connect](https://github.com/JFG-UOC/ddpe-connect).
+
+## ToDo
+
+Known gaps worth addressing next, roughly in priority order:
+
+* **Persistent token cache.** The current `TokenCache` is in-memory and
+  process-local (see `auth.py`), so it is lost as soon as the process exits.
+  Every new script or CLI invocation re-authenticates against Keycloak even
+  if the previous token is still valid. Add an on-disk cache (e.g. under
+  `~/.cache/ddpe/`, file-permission restricted or OS-keyring backed) keyed
+  the same way as today's in-memory cache, so repeated short-lived
+  executions reuse a valid token instead of requesting a new one each time.
+* **Refresh-token support.** Only the OAuth2 password grant is implemented.
+  Keycloak also returns a `refresh_token`; using it to renew an expiring
+  access token would avoid resending the user's password on every refresh.
+* **Credential provider abstraction.** Username and password are read as
+  plain strings from environment variables or TOML. Support an alternative
+  secrets backend (OS keyring, Vault, a short-lived SSO/device-code flow) so
+  long-lived passwords do not need to sit in `.env` files.
+* **Retry and backoff.** `KeycloakAuthenticator.get_token` and the Spark
+  Connect `getOrCreate()` call fail on the first transient network error.
+  Add bounded retries with backoff for both calls.
+* **Opt-in diagnostic logging.** The library currently only communicates
+  through exceptions. A `logging`-based, secret-redacted debug channel would
+  help troubleshoot connection and auth issues without adding noise by
+  default.
 
 ## License
 

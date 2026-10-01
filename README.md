@@ -13,8 +13,7 @@ spark = DDPESession.builder.getOrCreate()
 
 The library focuses on client connection setup. Catalogs, storage, the application
 name, and server-side Spark extensions remain DDPE server responsibilities.
-Supported client-visible Spark properties can be supplied with `.config()`, except
-`spark.app.name`.
+Supported client-visible Spark properties can be supplied with `.config()`.
 
 ## Features
 
@@ -29,7 +28,7 @@ Supported client-visible Spark properties can be supplied with `.config()`, exce
 
 ## Requirements
 
-* Python 3.11 or newer
+* Python 3.10 or newer
 * Git, when installing directly from GitHub
 * A PySpark Connect client compatible with the DDPE Spark server
 * Network access to Keycloak and the DDPE Spark Connect endpoint
@@ -49,7 +48,7 @@ python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@main"
 For reproducible deployments, install a release tag:
 
 ```bash
-python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.1"
+python -m pip install "git+https://github.com/JFG-UOC/ddpe-connect.git@v0.1.2"
 ```
 
 Upgrade an existing installation from GitHub:
@@ -58,26 +57,6 @@ Upgrade an existing installation from GitHub:
 python -m pip install --upgrade --force-reinstall \
   "git+https://github.com/JFG-UOC/ddpe-connect.git@main"
 ```
-
-For a private repository, Git must already be authenticated with an account or
-Personal Access Token that can read the repository.
-
-### Corporate proxy certificates
-
-When a corporate proxy intercepts TLS, configure Git with the corporate CA bundle:
-
-```bash
-git config --global http.sslCAInfo /path/to/corporate-proxy-ca.pem
-```
-
-On Git for Windows, use the Windows certificate store when the corporate CA is
-already installed there:
-
-```bash
-git config --global http.sslBackend schannel
-```
-
-Avoid disabling certificate validation permanently.
 
 ## Installation from a local checkout
 
@@ -142,7 +121,7 @@ verify_ssl = true
 "spark.sql.shuffle.partitions" = "16"
 ```
 
-Keep secrets in environment variables rather than TOML:
+Keep secrets in environment variables rather thanTOML:
 
 ```bash
 export DDPE_OIDC_CLIENT_SECRET="..."
@@ -156,11 +135,6 @@ Configuration precedence is:
 2. Environment variables
 3. TOML
 4. Built-in defaults
-
-The local development defaults are `localhost:15002` for Spark Connect,
-`http://localhost:8080/realms/ddpe/protocol/openid-connect/token` for Keycloak,
-and `ddpe-client` for the client ID. User credentials default to empty values and
-must be provided unless `DDPE_ACCESS_TOKEN` is set.
 
 ## Builder configuration
 
@@ -259,6 +233,9 @@ ruff check .
 python -m build
 python -m pip install --force-reinstall dist/*.whl
 ```
+
+Continuous integration (`.github/workflows/ci.yml`) runs this same suite — lint,
+tests, and build — on every push and pull request across Python 3.10 to 3.13.
 
 The canonical repository is
 [github.com/JFG-UOC/ddpe-connect](https://github.com/JFG-UOC/ddpe-connect).
